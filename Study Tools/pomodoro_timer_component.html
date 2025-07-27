@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer - Compact</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ffff00',
+                        dark: {
+                            100: '#2a2a2a',
+                            200: '#1a1a1a',
+                            300: '#111111',
+                            400: '#0a0a0a',
+                        },
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-slow': 'pulse 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styles for elements that can't be easily done with Tailwind */
+        .progress-circle {
+            background: conic-gradient(var(--progress-color, #ffff00) var(--progress, 0deg), #333 var(--progress, 0deg));
+        }
+        
+        .progress-circle::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            right: 8px;
+            bottom: 8px;
+            border-radius: 50%;
+            background: #1a1a1a;
+        }
+        
+        .phase-work {
+            --progress-color: #ffff00;
+        }
+        
+        .phase-break {
+            --progress-color: #4CAF50;
+        }
+        
+        .phase-long-break {
+            --progress-color: #2196F3;
+        }
+        
+        @keyframes currentPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        @keyframes timerPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .timer-running .progress-circle {
+            animation: timerPulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-dark-400 text-white p-5 font-sans">
+    <a href="study-tools.html" class="fixed top-5 left-5 py-2 px-4 bg-primary text-black rounded-full font-bold cursor-pointer no-underline z-10 hover:scale-105 transition-transform">← Back to Study Tools</a>
+    
+    <div class="max-w-md mx-auto">
+        <div class="bg-dark-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10">
+            <div class="flex justify-between items-center mb-5">
+                <div class="text-lg font-bold text-primary">Pomodoro</div>
+                <div class="flex gap-1.5" id="sessionDots">
+                    <div class="w-2 h-2 rounded-full bg-primary shadow-md shadow-primary/40 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-primary shadow-md shadow-primary/40 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-white animate-pulse transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-dark-100 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-dark-100 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-dark-100 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-dark-100 transition-all duration-300"></div>
+                    <div class="w-2 h-2 rounded-full bg-dark-100 transition-all duration-300"></div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-5 mb-5">
+                <div class="flex-1 text-center">
+                    <div class="text-3xl font-bold text-white mb-1 font-mono" id="timerDisplay">25:00</div>
+                    <div class="text-xs text-primary font-semibold tracking-wider" id="timerPhase">FOCUS TIME</div>
+                </div>
+                
+                <div class="w-24 h-24 relative flex-shrink-0">
+                    <div class="progress-circle phase-work w-full h-full rounded-full flex items-center justify-center relative transition-all duration-300" id="progressCircle">
+                        <div class="relative z-10 text-sm font-bold text-white" id="progressPercent">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex gap-2">
+                    <button class="w-10 h-10 bg-primary text-black rounded-lg flex items-center justify-center transition-all hover:scale-105 hover:brightness-110" id="playBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button class="w-10 h-10 bg-red-500 text-white rounded-lg items-center justify-center transition-all hover:scale-105 hover:brightness-110 hidden" id="pauseBtn"><!-- Will toggle between hidden and flex via JS -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v4a1 1 0 11-2 0V8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button class="w-10 h-10 bg-dark-100 text-white rounded-lg flex items-center justify-center transition-all hover:scale-105 hover:brightness-110" id="resetBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <button class="w-10 h-10 bg-dark-100 text-white rounded-lg flex items-center justify-center transition-all hover:scale-105 hover:brightness-110" id="skipBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.834l-1.391 2.485a1 1 0 001.715 1.03L11.367 11H13a1 1 0 100-2h-1.834l1.391-2.485a1 1 0 00-1.715-1.03L9.633 9H8a1 1 0 100 2h1.834l-1.391 2.485a1 1 0 001.715 1.03L12.367 11H14a1 1 0 100-2h-1.834l1.391-2.485a1 1 0 00-1.715-1.03L9.633 9H9a1 1 0 000 2h.633l-1.775 3.485z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <button class="py-2 px-3 bg-dark-100 text-primary rounded-lg flex items-center gap-1.5 transition-all hover:bg-dark-100/80" id="settingsToggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+                    </svg>
+                    Settings
+                </button>
+            </div>
+
+            <div class="p-4 bg-dark-300 rounded-xl mb-4 hidden" id="settingsPanel"><!-- Will toggle between hidden and grid via JS -->
+                <div class="space-y-1">
+                    <div class="text-xs text-primary font-semibold">WORK TIME</div>
+                    <select class="w-full bg-dark-100 border border-dark-100 text-white rounded p-1.5 text-sm focus:outline-none focus:border-primary" id="workTime">
+                        <option value="25">25 min</option>
+                        <option value="30">30 min</option>
+                        <option value="45">45 min</option>
+                        <option value="50">50 min</option>
+                        <option value="60">60 min</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <div class="text-xs text-primary font-semibold">SESSIONS</div>
+                    <select class="w-full bg-dark-100 border border-dark-100 text-white rounded p-1.5 text-sm focus:outline-none focus:border-primary" id="sessionCount">
+                        <option value="4">4 sessions</option>
+                        <option value="6">6 sessions</option>
+                        <option value="8">8 sessions</option>
+                    </select>
+                </div>
+                <div class="space-y-1">
+                    <div class="text-xs text-primary font-semibold">COMPLETED</div>
+                    <div class="w-full bg-dark-100/50 border border-dark-100/80 text-primary rounded p-1.5 text-sm text-center" id="completedSessions">0</div>
+                </div>
+                <div class="space-y-1">
+                    <div class="text-xs text-primary font-semibold">STREAK</div>
+                    <div class="w-full bg-dark-100/50 border border-dark-100/80 text-primary rounded p-1.5 text-sm text-center" id="currentStreak">0</div>
+                </div>
+                <div class="col-span-2 space-y-1">
+                    <div class="text-xs text-primary font-semibold">TOTAL TIME</div>
+                    <div class="w-full bg-dark-100/50 border border-dark-100/80 text-primary rounded p-1.5 text-sm text-center" id="totalDuration">2h 30m</div>
+                </div>
+            </div>
+
+            <div class="flex justify-between bg-dark-300 rounded-xl p-4">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-primary mb-1" id="completedSessionsDisplay">0</div>
+                    <div class="text-xs text-gray-400">Completed</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-white mb-1" id="totalTimeDisplay">0m</div>
+                    <div class="text-xs text-gray-400">Total Time</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-white mb-1" id="currentStreakDisplay">0</div>
+                    <div class="text-xs text-gray-400">Streak</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class CompactPomodoroTimer {
+            constructor() {
+                // DOM Elements
+                this.timerDisplay = document.getElementById('timerDisplay');
+                this.timerPhase = document.getElementById('timerPhase');
+                this.progressCircle = document.getElementById('progressCircle');
+                this.progressPercent = document.getElementById('progressPercent');
+                this.playBtn = document.getElementById('playBtn');
+                this.pauseBtn = document.getElementById('pauseBtn');
+                this.resetBtn = document.getElementById('resetBtn');
+                this.skipBtn = document.getElementById('skipBtn');
+                this.settingsToggle = document.getElementById('settingsToggle');
+                this.settingsPanel = document.getElementById('settingsPanel');
+                this.workTimeSelect = document.getElementById('workTime');
+                this.sessionCountSelect = document.getElementById('sessionCount');
+                this.completedSessionsDisplay = document.getElementById('completedSessionsDisplay');
+                this.totalTimeDisplay = document.getElementById('totalTimeDisplay');
+                this.currentStreakDisplay = document.getElementById('currentStreakDisplay');
+                this.completedSessionsSettings = document.getElementById('completedSessions');
+                this.totalDurationDisplay = document.getElementById('totalDuration');
+                
+                // Timer state
+                this.isRunning = false;
+                this.timeLeft = 25 * 60; // 25 minutes in seconds
+                this.totalTime = this.timeLeft;
+                this.interval = null;
+                this.currentPhase = 'work';
+                this.sessionCount = 0;
+                this.completedSessions = 0;
+                this.totalSessions = 4;
+                this.currentStreak = 0;
+                this.totalMinutes = 0;
+                
+                // Settings
+                this.workTime = 25;
+                this.shortBreakTime = 5;
+                this.longBreakTime = 15;
+                
+                // Initialize
+                this.updateDisplay();
+                this.updateProgress();
+                this.updateTotalDuration();
+                this.bindEvents();
+            }
+            
+            bindEvents() {
+                this.playBtn.addEventListener('click', () => this.start());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.resetBtn.addEventListener('click', () => this.reset());
+                this.skipBtn.addEventListener('click', () => this.skip());
+                this.settingsToggle.addEventListener('click', () => this.toggleSettings());
+                this.workTimeSelect.addEventListener('change', () => this.updateSettings());
+                this.sessionCountSelect.addEventListener('change', () => this.updateSettings());
+            }
+            
+            toggleSettings() {
+                this.settingsPanel.classList.toggle('hidden');
+                if (!this.settingsPanel.classList.contains('hidden')) {
+                    this.settingsPanel.classList.add('grid');
+                    this.settingsPanel.classList.add('grid-cols-2');
+                    this.settingsPanel.classList.add('gap-3');
+                } else {
+                    this.settingsPanel.classList.remove('grid');
+                    this.settingsPanel.classList.remove('grid-cols-2');
+                    this.settingsPanel.classList.remove('gap-3');
+                }
+            }
+            
+            start() {
+                if (this.isRunning) return;
+                
+                this.isRunning = true;
+                document.body.classList.add('timer-running');
+                this.playBtn.classList.add('hidden');
+                this.pauseBtn.classList.remove('hidden');
+                this.pauseBtn.classList.add('flex');
+                
+                this.interval = setInterval(() => {
+                    this.timeLeft--;
+                    this.updateDisplay();
+                    this.updateProgress();
+                    
+                    if (this.timeLeft <= 0) {
+                        this.completePhase();
+                    }
+                }, 1000);
+            }
+            
+            pause() {
+                if (!this.isRunning) return;
+                
+                this.isRunning = false;
+                document.body.classList.remove('timer-running');
+                clearInterval(this.interval);
+                this.playBtn.classList.remove('hidden');
+                this.pauseBtn.classList.add('hidden');
+                this.pauseBtn.classList.remove('flex');
+            }
+            
+            reset() {
+                this.pause();
+                this.currentPhase = 'work';
+                this.timeLeft = this.workTime * 60;
+                this.totalTime = this.timeLeft;
+                this.updateDisplay();
+                this.updateProgress();
+                this.updatePhaseStyle();
+            }
+            
+            skip() {
+                this.pause();
+                this.completePhase();
+            }
+            
+            completePhase() {
+                this.playNotification();
+                
+                if (this.currentPhase === 'work') {
+                    this.completedSessions++;
+                    this.totalMinutes += this.workTime;
+                    this.currentStreak++;
+                    this.updateStats();
+                    
+                    if (this.sessionCount >= this.totalSessions - 1) {
+                        this.sessionCount = 0;
+                        this.currentPhase = 'long-break';
+                        this.timeLeft = this.longBreakTime * 60;
+                    } else {
+                        this.sessionCount++;
+                        this.currentPhase = 'break';
+                        this.timeLeft = this.shortBreakTime * 60;
+                    }
+                } else {
+                    this.currentPhase = 'work';
+                    this.timeLeft = this.workTime * 60;
+                }
+                
+                this.totalTime = this.timeLeft;
+                this.updateDisplay();
+                this.updateProgress();
+                this.updatePhaseStyle();
+                this.updateSessionDots();
+                
+                // Auto-start the next phase
+                if (this.isRunning) {
+                    this.pause();
+                    this.start();
+                }
+            }
+            
+            calculateBreakTimes() {
+                this.shortBreakTime = Math.max(Math.floor(this.workTime / 5), 3);
+                this.longBreakTime = Math.max(Math.floor(this.workTime / 2), 10);
+            }
+            
+            updateTotalDuration() {
+                const totalMinutes = (this.workTime * this.totalSessions) + 
+                                    (this.shortBreakTime * (this.totalSessions - 1)) + 
+                                    this.longBreakTime;
+                                    
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                this.totalDurationDisplay.textContent = `${hours > 0 ? hours + 'h ' : ''}${minutes}m`;
+            }
+            
+            getCurrentPhaseDuration() {
+                switch (this.currentPhase) {
+                    case 'work': return this.workTime;
+                    case 'break': return this.shortBreakTime;
+                    case 'long-break': return this.longBreakTime;
+                }
+            }
+            
+            updateDisplay() {
+                const minutes = Math.floor(this.timeLeft / 60);
+                const seconds = this.timeLeft % 60;
+                
+                this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                switch (this.currentPhase) {
+                    case 'work':
+                        this.timerPhase.textContent = 'FOCUS TIME';
+                        break;
+                    case 'break':
+                        this.timerPhase.textContent = 'SHORT BREAK';
+                        break;
+                    case 'long-break':
+                        this.timerPhase.textContent = 'LONG BREAK';
+                        break;
+                }
+            }
+            
+            updateProgress() {
+                const progress = 360 - ((this.timeLeft / this.totalTime) * 360);
+                const percent = Math.round(((this.totalTime - this.timeLeft) / this.totalTime) * 100);
+                
+                this.progressCircle.style.setProperty('--progress', `${progress}deg`);
+                this.progressPercent.textContent = `${percent}%`;
+            }
+            
+            updatePhaseStyle() {
+                this.progressCircle.className = `progress-circle phase-${this.currentPhase} w-full h-full rounded-full flex items-center justify-center relative transition-all duration-300`;
+            }
+            
+            updateSessionDots() {
+                const dots = document.querySelectorAll('#sessionDots > div');
+                
+                // Hide/show dots based on total sessions
+                dots.forEach((dot, index) => {
+                    if (index >= this.totalSessions) {
+                        dot.classList.add('hidden');
+                    } else {
+                        dot.classList.remove('hidden');
+                        // Reset classes
+                        dot.className = 'w-2 h-2 rounded-full transition-all duration-300';
+                        
+                        if (index < this.sessionCount) {
+                            dot.classList.add('bg-primary', 'shadow-md', 'shadow-primary/40');
+                        } else if (index === this.sessionCount && this.currentPhase === 'work') {
+                            dot.classList.add('bg-white', 'animate-pulse');
+                        } else {
+                            dot.classList.add('bg-dark-100');
+                        }
+                    }
+                });
+            }
+            
+            updateStats() {
+                this.completedSessionsDisplay.textContent = this.completedSessions;
+                this.completedSessionsSettings.textContent = this.completedSessions;
+                this.totalTimeDisplay.textContent = `${this.totalMinutes}m`;
+                this.currentStreakDisplay.textContent = this.currentStreak;
+                this.currentStreakDisplay.textContent = this.currentStreak;
+            }
+            
+            updateSettings() {
+                if (!this.isRunning) {
+                    this.workTime = parseInt(this.workTimeSelect.value);
+                    this.totalSessions = parseInt(this.sessionCountSelect.value);
+                    
+                    this.calculateBreakTimes();
+                    this.updateTotalDuration();
+                    
+                    this.timeLeft = this.getCurrentPhaseDuration() * 60;
+                    this.totalTime = this.timeLeft;
+                    this.updateDisplay();
+                    this.updateProgress();
+                    this.updateSessionDots();
+                }
+            }
+            
+            playNotification() {
+                // Quick audio beep
+                try {
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                } catch (e) {
+                    // Fallback for browsers without audio context
+                    console.log('Timer completed!');
+                }
+            }
+        }
+        
+        // Initialize timer
+        window.addEventListener('DOMContentLoaded', () => {
+            window.compactTimer = new CompactPomodoroTimer();
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (window.compactTimer.isRunning) {
+                    window.compactTimer.pause();
+                } else {
+                    window.compactTimer.start();
+                }
+            } else if (e.code === 'KeyR') {
+                window.compactTimer.reset();
+            } else if (e.code === 'KeyS') {
+                window.compactTimer.skip();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,633 @@
+#!/usr/bin/env python3
+"""
+Moodle API Client for Campus Underground
+This module provides a client for interacting with Moodle's web services API.
+"""
+
+import requests
+from typing import Dict, Any, List, Optional, Union
+import os
+import requests
+import logging
+import tempfile
+import time
+import random
+from datetime import datetime, timedelta
+import json
+import dotenv
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger('moodle_client')
+
+# Load environment variables
+dotenv.load_dotenv()
+
+class MoodleAPIClient:
+    """Client for interacting with Moodle's Web Services API."""
+    
+    def __init__(self, use_mock_data=False):
+        """Initialize the Moodle API client"""
+        self.base_url = os.getenv('MOODLE_URL', 'https://moodle.concordia.ca')
+        self.token = os.getenv('MOODLE_API_TOKEN', '')
+        self.logger = logging.getLogger('moodle_client')
+        self.use_mock_data = use_mock_data or self.token == 'your_moodle_api_token_here'
+        
+        if self.use_mock_data:
+            self.logger.info("Using mock data for Moodle API client")
+        else:
+            self.logger.info(f"Moodle API client initialized with base URL: {self.base_url}")
+        
+        # Ensure the base URL ends with a slash
+        if not self.base_url.endswith('/'):
+            self.base_url += '/'
+            
+        # Web service endpoint
+        self.ws_endpoint = os.path.join(self.base_url, "webservice/rest/server.php")
+        
+        # Default parameters for all requests
+        self.default_params = {
+            "wstoken": self.token,
+            "moodlewsrestformat": "json"
+        }
+        
+    def request(self, function, **kwargs):
+        """Make a request to the Moodle API"""
+        if self.use_mock_data:
+            return self._get_mock_data(function, **kwargs)
+        
+        # Prepare the parameters
+        params = {
+            'wstoken': self.token,
+            'moodlewsrestformat': 'json',
+            'wsfunction': function,
+            **kwargs
+        }
+        
+        # Try multiple URL formats - prioritize the one that works in fetch_demo.py
+        urls_to_try = [
+            f"{self.base_url}/moodle/webservice/rest/server.php",  # This one works in fetch_demo.py
+            f"{self.base_url}/webservice/rest/server.php"
+        ]
+        
+        last_error = None
+        for attempt, url in enumerate(urls_to_try, 1):
+            try:
+                self.logger.info(f"Attempt {attempt}: Making request to: {url}")
+                response = requests.get(url, params=params)
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                self.logger.error(f"Request failed: {e}")
+                last_error = e
+                if hasattr(e, 'response') and e.response is not None:
+                    self.logger.error(f"Response content: {e.response.text}")
+                
+                if attempt < len(urls_to_try):
+                    self.logger.info(f"Trying alternative URL format (attempt {attempt+1})...")
+        
+        self.logger.error("All URL formats failed")
+        return None
+            
+    def _make_request(self, function, params=None):
+        """Alias for request method to maintain compatibility"""
+        return self.request(function, params)
+            
+    def _get_mock_data(self, function, params=None):
+        """Return mock data for testing"""
+        self.logger.info(f"Returning mock data for function: {function}")
+        
+        if function == 'core_webservice_get_site_info':
+            return {
+                'sitename': 'Campus Underground Moodle',
+                'username': 'testuser',
+                'firstname': 'Test',
+                'lastname': 'User',
+                'fullname': 'Test User',
+                'userid': 1,
+                'siteurl': 'https://moodle.example.com',
+                'release': 'Moodle 4.1.1+',
+                'functions': [
+                    {'name': 'core_webservice_get_site_info'},
+                    {'name': 'core_enrol_get_users_courses'},
+                    {'name': 'core_course_get_contents'},
+                    {'name': 'mod_assign_get_assignments'},
+                    {'name': 'gradereport_user_get_grade_items'}
+                ]
+            }
+        
+        elif function == 'core_enrol_get_users_courses':
+            return [
+                {
+                    'id': 1,
+                    'shortname': 'COEN 352',
+                    'fullname': 'Data Structures and Algorithms',
+                    'summary': 'Advanced data structures and algorithm design techniques.',
+                    'progress': 75,
+                    'startdate': 1625097600,
+                    'enddate': 1640995200
+                },
+                {
+                    'id': 2,
+                    'shortname': 'ENGR 290',
+                    'fullname': 'Technical Writing and Communication',
+                    'summary': 'Effective technical communication for engineers.',
+                    'progress': 60,
+                    'startdate': 1625097600,
+                    'enddate': 1640995200
+                },
+                {
+                    'id': 3,
+                    'shortname': 'SOEN 341',
+                    'fullname': 'Software Process',
+                    'summary': 'Software development methodologies and processes.',
+                    'progress': 80,
+                    'startdate': 1625097600,
+                    'enddate': 1640995200
+                },
+                {
+                    'id': 4,
+                    'shortname': 'COMP 346',
+                    'fullname': 'Operating Systems',
+                    'summary': 'Principles of operating systems design and implementation.',
+                    'progress': 65,
+                    'startdate': 1625097600,
+                    'enddate': 1640995200
+                }
+            ]
+        
+        elif function == 'core_course_get_contents':
+            return [
+                {
+                    'id': 1,
+                    'name': 'Week 1: Introduction',
+                    'summary': 'Introduction to the course and basic concepts',
+                    'modules': [
+                        {
+                            'id': 101,
+                            'name': 'Course Overview',
+                            'modname': 'resource',
+                            'contents': [
+                                {
+                                    'type': 'file',
+                                    'filename': 'overview.pdf',
+                                    'fileurl': 'https://example.com/files/overview.pdf',
+                                    'filesize': 1024000
+                                }
+                            ]
+                        },
+                        {
+                            'id': 102,
+                            'name': 'Introduction Lecture',
+                            'modname': 'resource',
+                            'contents': [
+                                {
+                                    'type': 'file',
+                                    'filename': 'lecture1.pdf',
+                                    'fileurl': 'https://example.com/files/lecture1.pdf',
+                                    'filesize': 2048000
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    'id': 2,
+                    'name': 'Week 2: Core Concepts',
+                    'summary': 'Exploring the fundamental concepts',
+                    'modules': [
+                        {
+                            'id': 201,
+                            'name': 'Core Concepts Lecture',
+                            'modname': 'resource',
+                            'contents': [
+                                {
+                                    'type': 'file',
+                                    'filename': 'lecture2.pdf',
+                                    'fileurl': 'https://example.com/files/lecture2.pdf',
+                                    'filesize': 1536000
+                                }
+                            ]
+                        },
+                        {
+                            'id': 202,
+                            'name': 'Assignment 1',
+                            'modname': 'assign',
+                            'contents': []
+                        }
+                    ]
+                }
+            ]
+        
+        elif function == 'mod_assign_get_assignments':
+            return {
+                'courses': [
+                    {
+                        'id': 1,
+                        'fullname': 'Introduction to Computer Science',
+                        'assignments': [
+                            {
+                                'id': 1,
+                                'name': 'Programming Basics',
+                                'duedate': int(time.time()) + 604800,  # One week from now
+                                'allowsubmissionsfromdate': int(time.time()) - 604800,  # One week ago
+                                'grade': 100,
+                                'timemodified': int(time.time()) - 86400  # Yesterday
+                            },
+                            {
+                                'id': 2,
+                                'name': 'Data Structures',
+                                'duedate': int(time.time()) + 1209600,  # Two weeks from now
+                                'allowsubmissionsfromdate': int(time.time()),
+                                'grade': 100,
+                                'timemodified': int(time.time()) - 43200  # 12 hours ago
+                            }
+                        ]
+                    }
+                ]
+            }
+        
+        elif function == 'gradereport_user_get_grade_items':
+            return {
+                'usergrades': [
+                    {
+                        'courseid': 1,
+                        'coursename': 'Introduction to Computer Science',
+                        'gradeitems': [
+                            {
+                                'id': 1,
+                                'itemname': 'Programming Basics',
+                                'graderaw': 85,
+                                'grademax': 100,
+                                'grademin': 0,
+                                'feedback': 'Good work on the assignment!'
+                            },
+                            {
+                                'id': 2,
+                                'itemname': 'Midterm Exam',
+                                'graderaw': 78,
+                                'grademax': 100,
+                                'grademin': 0,
+                                'feedback': 'Good understanding of core concepts.'
+                            }
+                        ]
+                    },
+                    {
+                        'courseid': 2,
+                        'coursename': 'Advanced Calculus',
+                        'gradeitems': [
+                            {
+                                'id': 3,
+                                'itemname': 'Problem Set 1',
+                                'graderaw': 92,
+                                'grademax': 100,
+                                'grademin': 0,
+                                'feedback': 'Excellent work!'
+                            }
+                        ]
+                    }
+                ]
+            }
+        
+        # Default mock data for other functions
+        return {'status': 'success', 'message': 'Mock data for ' + function}
+    
+    def is_function_available(self, wsfunction: str) -> bool:
+        """
+        Check if a specific Moodle API function is available.
+        
+        Args:
+            wsfunction: The Moodle web service function to check
+            
+        Returns:
+            True if the function is available, False otherwise
+        """
+        try:
+            # Try to call the function with minimal parameters
+            result = self._make_request(wsfunction, handle_errors=False)
+            # If we get an 'invalid parameter' error, the function exists but needs parameters
+            # If we get a 'access control exception', the function exists but we don't have permission
+            # If we get a 'function does not exist', the function is not available
+            
+            if isinstance(result, dict) and result.get('error'):
+                error = result.get('error')
+                if "does not exist" in error:
+                    return False
+                # Other errors might indicate the function exists but needs parameters or permissions
+                return True
+            return True
+        except Exception:
+            return False
+    
+    def get_site_info(self) -> Dict[str, Any]:
+        """
+        Get information about the Moodle site.
+        
+        Returns:
+            Site information including version, user details, etc.
+        """
+        return self._make_request("core_webservice_get_site_info")
+    
+    def get_courses(self, user_id: int = None) -> List[Dict[str, Any]]:
+        """
+        Get the list of courses the user is enrolled in.
+        
+        Args:
+            user_id: The ID of the user to get courses for
+            
+        Returns:
+            List of course information
+        """
+        if not user_id:
+            user_id = self.get_site_info().get("userid")
+            
+        return self._make_request("core_enrol_get_users_courses", {
+            "userid": user_id
+        })
+    
+    def get_course_contents(self, course_id: int) -> List[Dict[str, Any]]:
+        """
+        Get the contents of a specific course.
+        
+        Args:
+            course_id: The ID of the course
+            
+        Returns:
+            List of course sections with their contents
+        """
+        return self._make_request("core_course_get_contents", {
+            "courseid": course_id
+        })
+    
+    def get_calendar_events(self, 
+                           events_from: Optional[str] = None, 
+                           events_to: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Get calendar events within a specified time range.
+        
+        Args:
+            events_from: Start date (ISO format YYYY-MM-DD)
+            events_to: End date (ISO format YYYY-MM-DD)
+            
+        Returns:
+            Dictionary containing events and warnings
+        """
+        params = {}
+        if events_from:
+            params["timestart"] = events_from
+        if events_to:
+            params["timeend"] = events_to
+            
+        return self._make_request("core_calendar_get_calendar_events", params)
+    
+    def get_assignments(self, course_id: Optional[int] = None, user_id: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Get assignments for all courses or a specific course.
+        
+        Args:
+            course_id: Optional course ID to filter assignments
+            user_id: Optional user ID to get assignments for
+            
+        Returns:
+            Dictionary containing courses and their assignments or an empty dict if not available
+        """
+        # Check if this function is available in the Moodle instance
+        if not self.is_function_available("mod_assign_get_assignments"):
+            logger.warning("The assignments API function is not available on this Moodle instance")
+            return {"courses": [], "warnings": [{"message": "API function not available"}]}
+            
+        params = {}
+        if course_id:
+            params["courseids"] = [course_id]
+        
+        try:    
+            return self._make_request("mod_assign_get_assignments", params)
+        except Exception as e:
+            logger.error(f"Error getting assignments: {e}")
+            return {"courses": [], "warnings": [{"message": str(e)}]}
+    
+    def get_user_grades(self, user_id: int, course_id: Optional[int] = None) -> Dict[str, Any]:
+        """
+        Get grades for a user.
+        
+        Args:
+            user_id: The ID of the user to get grades for
+            course_id: Optional course ID to filter grades
+            
+        Returns:
+            Dictionary containing grade items or an empty dict if not available
+        """
+        # Check if this function is available in the Moodle instance
+        if not self.is_function_available("gradereport_user_get_grade_items"):
+            logger.warning("The grades API function is not available on this Moodle instance")
+            return {"usergrades": [], "warnings": [{"message": "API function not available"}]}
+        
+        try:
+            params = {"userid": user_id}
+            
+            if course_id:
+                params["courseid"] = course_id
+                
+            return self._make_request("gradereport_user_get_grade_items", params)
+        except Exception as e:
+            logger.error(f"Error getting grades: {e}")
+            return {"usergrades": [], "warnings": [{"message": str(e)}]}
+    
+    def get_grade_distribution(self, user_id: int) -> List[Dict[str, Any]]:
+        """
+        Get grade distribution for analytics.
+        
+        Args:
+            user_id: The ID of the user
+            
+        Returns:
+            List of grade distributions by course
+        """
+        try:
+            # Get all courses for the user
+            courses = self.get_courses(user_id)
+            
+            # Get grades for each course
+            grade_distribution = []
+            for course in courses:
+                course_id = course.get('id')
+                course_name = course.get('fullname')
+                
+                grades = self.get_user_grades(user_id, course_id)
+                
+                # Extract grade information
+                if grades and 'usergrades' in grades and len(grades['usergrades']) > 0:
+                    user_grade = grades['usergrades'][0]
+                    grade_items = user_grade.get('gradeitems', [])
+                    
+                    # Calculate overall course grade if available
+                    course_grade_items = [item for item in grade_items if item.get('itemtype') == 'course']
+                    if course_grade_items:
+                        course_grade = course_grade_items[0]
+                        grade = float(course_grade.get('graderaw', 0))
+                        max_grade = float(course_grade.get('grademax', 100))
+                        percentage = (grade / max_grade) * 100 if max_grade > 0 else 0
+                        
+                        grade_distribution.append({
+                            'courseId': course_id,
+                            'courseName': course_name,
+                            'grade': grade,
+                            'maxGrade': max_grade,
+                            'percentage': percentage
+                        })
+            
+            return grade_distribution
+        except Exception as e:
+            logger.error(f"Error getting grade distribution: {e}")
+            return []
+    
+    def get_performance_overview(self, user_id: int) -> Dict[str, Any]:
+        """
+        Get performance overview for analytics.
+        
+        Args:
+            user_id: The ID of the user
+            
+        Returns:
+            Performance overview data
+        """
+        try:
+            # Get all courses for the user
+            courses = self.get_courses(user_id)
+            
+            # Get grades for each course
+            course_data = []
+            overall_grade = 0
+            total_courses = 0
+            
+            for course in courses:
+                course_id = course.get('id')
+                course_name = course.get('fullname')
+                
+                grades = self.get_user_grades(user_id, course_id)
+                progress = course.get('progress', 0)
+                
+                # Extract grade information
+                course_grade = 0
+                if grades and 'usergrades' in grades and len(grades['usergrades']) > 0:
+                    user_grade = grades['usergrades'][0]
+                    grade_items = user_grade.get('gradeitems', [])
+                    
+                    # Calculate overall course grade if available
+                    course_grade_items = [item for item in grade_items if item.get('itemtype') == 'course']
+                    if course_grade_items:
+                        course_grade_item = course_grade_items[0]
+                        grade = float(course_grade_item.get('graderaw', 0))
+                        max_grade = float(course_grade_item.get('grademax', 100))
+                        course_grade = (grade / max_grade) * 100 if max_grade > 0 else 0
+                        
+                        overall_grade += course_grade
+                        total_courses += 1
+                
+                course_data.append({
+                    'id': course_id,
+                    'name': course_name,
+                    'grade': course_grade,
+                    'progress': progress
+                })
+            
+            # Calculate overall metrics
+            avg_grade = overall_grade / total_courses if total_courses > 0 else 0
+            avg_progress = sum(c.get('progress', 0) for c in course_data) / len(course_data) if course_data else 0
+            
+            # Mock attendance and engagement (these would need to be calculated from actual data)
+            attendance = 85  # Mock value
+            engagement = 75  # Mock value
+            
+            return {
+                'overallGrade': avg_grade,
+                'attendance': attendance,
+                'engagement': engagement,
+                'progress': avg_progress,
+                'courses': course_data
+            }
+        except Exception as e:
+            logger.error(f"Error getting performance overview: {e}")
+            return {
+                'overallGrade': 0,
+                'attendance': 0,
+                'engagement': 0,
+                'progress': 0,
+                'courses': []
+            }
+            
+    def download_file(self, file_url: str, destination_path: str = None) -> Union[Dict[str, Any], str]:
+        """
+        Download a file from Moodle (such as a PDF) to a local destination.
+        
+        Args:
+            file_url: The URL of the file to download
+            destination_path: The local path where the file should be saved
+            
+        Returns:
+            Path to downloaded file or file data if no destination path provided
+        """
+        try:
+            # Prepare headers with authentication token
+            headers = {}
+            
+            # If the URL is from the same Moodle instance, add the token
+            if file_url.startswith(self.base_url):
+                # For Moodle files, we need to append the token as a query parameter
+                if '?' in file_url:
+                    file_url += f"&token={self.token}"
+                else:
+                    file_url += f"?token={self.token}"
+            
+            # Make the request to download the file
+            response = requests.get(file_url, headers=headers, stream=True)
+            response.raise_for_status()  # Raise exception for HTTP errors
+            
+            if destination_path:
+                # Save the file
+                with open(destination_path, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:  # Filter out keep-alive chunks
+                            f.write(chunk)
+                
+                logger.info(f"File downloaded successfully to {destination_path}")
+                return destination_path
+            else:
+                # Return the file data
+                return {
+                    'content': response.content,
+                    'content_type': response.headers.get('Content-Type', 'application/octet-stream'),
+                    'filename': self._get_filename_from_response(response)
+                }
+            
+        except Exception as e:
+            logger.error(f"Error downloading file: {e}")
+            return {"error": str(e)}
+    
+    def _get_filename_from_response(self, response):
+        """Extract filename from Content-Disposition header or URL"""
+        if 'Content-Disposition' in response.headers:
+            import re
+            disposition = response.headers['Content-Disposition']
+            filename = re.findall('filename="(.+)"', disposition)
+            if filename:
+                return filename[0]
+        
+        # Fall back to URL
+        url_path = response.url.split('?')[0]
+        return os.path.basename(url_path)
+
+
+if __name__ == "__main__":
+    # Example usage
+    try:
+        client = MoodleAPIClient()
+        site_info = client.get_site_info()
+        print(f"Connected to {site_info.get('sitename', 'Moodle')} as {site_info.get('fullname', 'User')}")
+        print(f"Moodle version: {site_info.get('release', 'Unknown')}")
+    except Exception as e:
+        print(f"Error: {e}")
+        print("Please make sure your .env file is set up correctly with your API token.")

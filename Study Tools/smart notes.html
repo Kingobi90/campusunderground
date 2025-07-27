@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Notes - Spaced Repetition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ffff00',
+                        dark: {
+                            100: '#2a2a2a',
+                            200: '#1a1a1a',
+                            300: '#111111',
+                            400: '#0a0a0a',
+                        },
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                        'pulse-slow': 'pulse 2s ease-in-out infinite',
+                        'progress-pulse': 'progressPulse 2s ease-in-out infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        .audio-notes-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .audio-notes-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .audio-notes-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 0, 0.1);
+        }
+
+        .study-journal-card {
+            background: #1a1a1a;
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .study-journal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 255, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffff00;
+            margin-bottom: 20px;
+        }
+
+        /* Audio Player Styles */
+        .audio-player {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .play-btn {
+            width: 48px;
+            height: 48px;
+            background: #ffff00;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 255, 0, 0.3);
+        }
+
+        .icon-play::before {
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 12px solid #000;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            margin-left: 3px;
+        }
+
+        .icon-pause::before {
+            content: '';
+            width: 4px;
+            height: 16px;
+            background: #000;
+            box-shadow: 6px 0 0 #000;
+        }
+
+        .audio-info {
+            flex: 1;
+        }
+
+        .current-track {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .track-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .speed-control {
+            background: #333;
+            border: none;
+            color: #ffff00;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .speed-control:hover {
+            background: #444;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffff00, #ffd700);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            animation: progressPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes progressPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
+        /* Spaced Repetition Queue */
+        .spaced-queue {
+            margin-top: 16px;
+        }
+
+        .queue-header {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .queue-item:hover {
+            background: rgba(255, 255, 0, 0.05);
+            padding-left: 8px;
+            border-radius: 8px;
+        }
+
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+
+        .queue-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ffff00;
+            animation: queuePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes queuePulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .queue-content {
+            flex: 1;
+        }
+
+        .queue-title {
+            font-size: 14px;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .queue-time {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Memory Stats */
+        .memory-stats {
+            text-align: center;
+        }
+
+        .retention-circle {
+            width: 120px;
+            height: 120px;
+            border: 4px solid #333;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .retention-circle::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border: 2px solid #ffff00;
+            border-radius: 50%;
+            border-right-color: transparent;
+            border-bottom-color: transparent;
+            animation: retentionSpin 3s linear infinite;
+        }
+
+        @keyframes retentionSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .retention-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffff00;
+            animation: valueCount 2s ease-out;
+        }
+
+        @keyframes valueCount {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .retention-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .memory-metrics {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            display: block;
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* Study Journal Styles */
+        .journal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .journal-date {
+            font-size: 14px;
+            color: #666;
+            background: #0f0f0f;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+
+        .add-entry-btn {
+            background: #ffff00;
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-entry-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255, 255, 0, 0.3);
+        }
+
+        .journal-entry {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 3px solid #ffff00;
+            transition: all 0.3s ease;
+        }
+
+        .journal-entry:hover {
+            background: #151515;
+            transform: translateX(4px);
+        }
+
+        .entry-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .entry-subject {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffff00;
+        }
+
+        .entry-duration {
+            font-size: 12px;
+            color: #666;
+            background: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .entry-topics {
+            margin-bottom: 12px;
+        }
+
+        .topics-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .topic-tag {
+            display: inline-block;
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-right: 6px;
+            margin-bottom: 4px;
+        }
+
+        .ai-summary {
+            background: rgba(255, 255, 0, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 2px solid #ffff00;
+        }
+
+        .ai-label {
+            font-size: 10px;
+            color: #ffff00;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .ai-text {
+            font-size: 14px;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        .personal-notes {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 2px solid #4CAF50;
+        }
+
+        .personal-label {
+            font-size: 10px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .personal-text {
+            font-size: 14px;
+            color: #fff;
+            line-height: 1.4;
+        }
+
+        .entry-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #333;
+        }
+
+        .achievement-badge {
+            background: #4CAF50;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .entry-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            background: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .action-icon:hover {
+            background: #444;
+            transform: scale(1.1);
+        }
+
+        .icon-audio::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #ffff00;
+            clip-path: polygon(30% 0%, 70% 0%, 50% 40%, 85% 40%, 15% 100%, 50% 60%);
+        }
+
+        .icon-edit::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border: 1px solid #fff;
+            border-radius: 1px;
+        }
+
+        .icon-edit::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 4px;
+            height: 1px;
+            background: #fff;
+            transform: rotate(45deg);
+        }
+
+        /* New Entry Form */
+        .new-entry-form {
+            display: none;
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 2px solid #ffff00;
+        }
+
+        .new-entry-form.open {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 6px;
+            display: block;
+            font-weight: 600;
+        }
+
+        .form-input {
+            width: 100%;
+            background: #333;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #ffff00;
+        }
+
+        .form-textarea {
+            width: 100%;
+            background: #333;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #ffff00;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .form-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-save {
+            background: #4CAF50;
+            color: #fff;
+        }
+
+        .btn-cancel {
+            background: #666;
+            color: #fff;
+        }
+
+        .form-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Mnemonics Styles */
+        .mnemonics-section {
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-left: 2px solid #4CAF50;
+        }
+
+        .mnemonics-label {
+            font-size: 10px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .mnemonic-item {
+            margin-bottom: 8px;
+            padding: 8px;
+            background: rgba(76, 175, 80, 0.05);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .mnemonic-item:hover {
+            background: rgba(76, 175, 80, 0.15);
+            transform: translateX(2px);
+        }
+
+        .mnemonic-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .mnemonic-concept {
+            font-size: 12px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .mnemonic-device {
+            font-size: 13px;
+            color: #fff;
+            line-height: 1.3;
+        }
+
+        .mnemonic-device strong {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .mnemonic-device em {
+            color: #ffff00;
+            font-style: normal;
+            font-weight: 600;
+        }
+
+        /* Mnemonic Generator Button */
+        .generate-mnemonics {
+            background: #4CAF50;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .generate-mnemonics:hover {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .mnemonic-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 2px solid #4CAF50;
+            border-radius: 12px;
+            padding: 20px;
+            max-width: 400px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .mnemonic-popup.show {
+            display: block;
+            animation: popupFade 0.3s ease-out;
+        }
+
+        @keyframes popupFade {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999;
+            display: none;
+        }
+
+        .popup-overlay.show {
+            display: block;
+        }
+
+        .progress-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .progress-bar-small {
+            flex: 1;
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill-small {
+            height: 100%;
+            background: linear-gradient(90deg, #ffff00, #4CAF50);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-percent-small {
+            font-size: 12px;
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .icon-brain::before {
+            content: '';
+            width: 10px;
+            height: 8px;
+            border: 2px solid #4CAF50;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            background: transparent;
+        }
+    </style>
+</head>
+<body class="bg-dark-400 text-white p-5 font-sans">
+    <a href="study-tools.html" class="fixed top-5 left-5 py-2 px-4 bg-primary text-black rounded-full font-bold cursor-pointer no-underline z-10 hover:scale-105 transition-transform">← Back to Study Tools</a>
+    
+    <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div class="bg-dark-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10">
+            <div class="text-xl font-bold text-primary mb-5">Audio Notes • Spaced Repetition</div>
+            
+            <div class="bg-dark-300 rounded-xl p-4 mb-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <button class="w-12 h-12 bg-primary rounded-full flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-md hover:shadow-primary/30" id="playBtn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-black" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                    <div class="flex-1">
+                        <div class="text-base font-bold text-white mb-1" id="currentTrack">Select a track to play</div>
+                        <div class="text-xs text-gray-500" id="trackMeta">No track playing</div>
+                    </div>
+                    <button class="bg-dark-100 border-none text-primary py-2 px-3 rounded-full text-xs font-bold cursor-pointer transition-all hover:bg-dark-100/80" id="speedControl">1.0x</button>
+                </div>
+                
+                <div class="w-full h-1 bg-dark-100 rounded-sm overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-primary to-yellow-500 rounded-sm transition-all duration-300 animate-progress-pulse" id="progressBar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="text-xs text-gray-500 font-bold tracking-wide mb-3">Generated from Journal</div>
+                <div class="flex items-center gap-3 py-2 border-b border-dark-100 transition-all duration-300 hover:translate-x-1 cursor-pointer">
+                    <div class="w-2 h-2 rounded-full bg-primary"></div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-white mb-0.5">Calculus: Derivatives & Chain Rule</div>
+                        <div class="text-xs text-gray-500">from today's session</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 py-2 border-b border-dark-100 transition-all duration-300 hover:translate-x-1 cursor-pointer">
+                    <div class="w-2 h-2 rounded-full bg-primary"></div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-white mb-0.5">History: WW2 Timeline</div>
+                        <div class="text-xs text-gray-500">from today's session</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 py-2 border-b border-dark-100 transition-all duration-300 hover:translate-x-1 cursor-pointer">
+                    <div class="w-2 h-2 rounded-full bg-primary"></div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-white mb-0.5">Chemistry: Organic Compounds</div>
+                        <div class="text-xs text-gray-500">from yesterday</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 py-2 border-b border-dark-100 transition-all duration-300 hover:translate-x-1 cursor-pointer">
+                    <div class="w-2 h-2 rounded-full bg-primary"></div>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-white mb-0.5">Literature: Shakespeare Analysis</div>
+                        <div class="text-xs text-gray-500">scheduled review</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-dark-200 rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/10 max-h-[700px] overflow-y-auto">
+            <div class="text-xl font-bold text-primary mb-5">Study Journal</div>
+            
+            <div class="flex justify-between items-center mb-4">
+                <div class="text-sm text-gray-400">Today • December 15, 2024</div>
+                <button class="bg-primary text-black py-2 px-4 rounded-lg font-bold text-sm cursor-pointer transition-all hover:scale-105 hover:shadow-md hover:shadow-primary/30" id="addEntryBtn">+ New Entry</button>
+            </div>
+
+            <div class="mb-5">
+                <div class="text-xs font-medium text-gray-400 mb-2">Today's Progress</div>
+                <div class="w-full h-1.5 bg-dark-100 rounded-full overflow-hidden mb-1">
+                    <div class="h-full bg-gradient-to-r from-primary to-yellow-500 rounded-full" style="width: 65%;"></div>
+                </div>
+                <div class="text-xs text-right text-gray-400">4/6 sessions</div>
+            </div>
+
+            <div class="hidden bg-dark-300 rounded-xl p-4 mb-4 border-2 border-primary" id="newEntryForm">
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Subject</label>
+                    <input type="text" class="w-full bg-dark-100 border border-dark-100 text-white rounded-md py-2 px-3 text-sm focus:outline-none focus:border-primary" placeholder="e.g., Physics, Math, History...">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Topics Covered</label>
+                    <input type="text" class="w-full bg-dark-100 border border-dark-100 text-white rounded-md py-2 px-3 text-sm focus:outline-none focus:border-primary" placeholder="e.g., momentum, derivatives, world war 2...">
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Your Notes & Achievements</label>
+                    <textarea class="w-full bg-dark-100 border border-dark-100 text-white rounded-md py-2 px-3 text-sm min-h-[80px] resize-y focus:outline-none focus:border-primary" placeholder="What did you learn? What clicked? Any challenges?"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Concepts to Memorize (optional)</label>
+                    <input type="text" class="w-full bg-dark-100 border border-dark-100 text-white rounded-md py-2 px-3 text-sm focus:outline-none focus:border-primary" placeholder="e.g., formulas, dates, definitions...">
+                </div>
+                <div class="flex gap-2 justify-end">
+                    <button class="py-2 px-4 rounded-md text-sm font-medium bg-dark-100 text-white hover:bg-dark-100/80 transition-colors" id="cancelEntry">Cancel</button>
+                    <button class="py-2 px-4 rounded-md text-sm font-medium bg-primary text-black hover:bg-primary/90 transition-colors" id="saveEntry">Save & Generate AI Summary</button>
+                </div>
+            </div>
+
+            <div class="bg-dark-300 rounded-xl p-4 mb-4 border-l-3 border-primary">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-base font-bold text-white">Physics</div>
+                    <div class="text-xs text-gray-400">45 min</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">TOPICS COVERED</div>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Momentum</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Conservation Laws</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Collisions</span>
+                </div>
+
+                <div class="bg-primary/10 rounded-lg p-3 mb-3 border-l-2 border-primary">
+                    <div class="text-xs text-primary font-bold tracking-wide mb-1">AI SUMMARY</div>
+                    <div class="text-sm text-white">
+                        Great progress on momentum concepts! You successfully worked through collision problems and demonstrated understanding of conservation principles. The connection between impulse and momentum change became clearer through practice problems. Consider reviewing elastic vs inelastic collisions for deeper mastery.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-1">YOUR NOTES</div>
+                    <div class="text-sm text-white">
+                        Finally clicked with momentum! The car crash examples really helped me visualize conservation of momentum. Still need to practice the math on elastic collisions - the equations are tricky but I'm getting there. Excited to tackle angular momentum next.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">AI MNEMONICS</div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">Conservation of Momentum</div>
+                        <div class="text-sm text-gray-300">"<strong>M</strong>ama <strong>V</strong>ery <strong>C</strong>arefully <strong>M</strong>oves <strong>V</strong>ases" → <em>m₁v₁ = m₂v₂</em></div>
+                    </div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">Elastic vs Inelastic</div>
+                        <div class="text-sm text-gray-300">"<strong>E</strong>lastic <strong>E</strong>nergy <strong>K</strong>eeps" → <em>Elastic collisions keep kinetic energy</em></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-dark-100">
+                    <div class="bg-green-600 text-white py-1 px-2 rounded-xl text-xs font-bold">Concept Mastered</div>
+                    <div class="flex items-center gap-2">
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Convert to Audio">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Generate More Mnemonics">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 3.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM3.5 10a6.5 6.5 0 1113 0 6.5 6.5 0 01-13 0z" clip-rule="evenodd" />
+                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                            </svg>
+                        </button>
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Edit Entry">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-dark-300 rounded-xl p-4 mb-4 border-l-3 border-primary">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-base font-bold text-white">Calculus</div>
+                    <div class="text-xs text-gray-400">30 min</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">TOPICS COVERED</div>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Derivatives</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Chain Rule</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Product Rule</span>
+                </div>
+
+                <div class="bg-primary/10 rounded-lg p-3 mb-3 border-l-2 border-primary">
+                    <div class="text-xs text-primary font-bold tracking-wide mb-1">AI SUMMARY</div>
+                    <div class="text-sm text-white">
+                        Solid foundation building in differentiation! You're applying the chain rule correctly in most cases. The product rule is becoming more intuitive. Focus on composite functions for the next session to strengthen chain rule application.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-1">YOUR NOTES</div>
+                    <div class="text-sm text-white">
+                        Chain rule is starting to make sense but I still mess up the order sometimes. Product rule feels natural now. Need more practice with trig functions and exponentials. The derivative shortcuts are becoming muscle memory.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">AI MNEMONICS</div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">Chain Rule Order</div>
+                        <div class="text-sm text-gray-300">"<strong>O</strong>utside <strong>T</strong>imes <strong>I</strong>nside" → <em>f'(g(x)) × g'(x)</em></div>
+                    </div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">Product Rule</div>
+                        <div class="text-sm text-gray-300">"<strong>F</strong>irst <strong>D</strong>erivative <strong>S</strong>econd, <strong>S</strong>econd <strong>D</strong>erivative <strong>F</strong>irst" → <em>f'g + fg'</em></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-dark-100">
+                    <div class="bg-blue-600 text-white py-1 px-2 rounded-xl text-xs font-bold">Making Progress</div>
+                    <div class="flex items-center gap-2">
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Convert to Audio">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Edit Entry">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-dark-300 rounded-xl p-4 mb-4 border-l-3 border-primary">
+                <div class="flex justify-between items-center mb-3">
+                    <div class="text-base font-bold text-white">History</div>
+                    <div class="text-xs text-gray-400">30 min</div>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">TOPICS COVERED</div>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">WW2 Timeline</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">Pearl Harbor</span>
+                    <span class="inline-block bg-dark-100 text-white px-2 py-1 rounded-xl text-xs mr-1.5 mb-1">US Entry</span>
+                </div>
+
+                <div class="bg-primary/10 rounded-lg p-3 mb-3 border-l-2 border-primary">
+                    <div class="text-xs text-primary font-bold tracking-wide mb-1">AI SUMMARY</div>
+                    <div class="text-sm text-white">
+                        Excellent chronological understanding developing! You've grasped the significance of Pearl Harbor as a turning point. Your timeline skills are improving. Consider exploring the European theater connections for a more complete picture.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-1">YOUR NOTES</div>
+                    <div class="text-sm text-white">
+                        The timeline is really helpful for understanding cause and effect. Pearl Harbor was such a game changer - crazy how one event shifted everything. Want to dive deeper into the Pacific war strategy next time.
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="text-xs text-gray-500 font-bold tracking-wide mb-2">AI MNEMONICS</div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">Pearl Harbor Date</div>
+                        <div class="text-sm text-gray-300">"<strong>P</strong>earl Harbor: <strong>12</strong>/<strong>7</strong> = <strong>P</strong>erfect <strong>L</strong>ucky <strong>7</strong>" → <em>December 7, 1941</em></div>
+                    </div>
+                    <div class="p-2 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                        <div class="text-sm font-medium text-white mb-1">WW2 US Entry Timeline</div>
+                        <div class="text-sm text-gray-300">"<strong>A</strong>ttack, <strong>A</strong>ngry, <strong>A</strong>llies" → <em>Attack → Anger → Join Allies</em></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-dark-100">
+                    <div class="bg-green-600 text-white py-1 px-2 rounded-xl text-xs font-bold">Timeline Mastery</div>
+                    <div class="flex items-center gap-2">
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Convert to Audio">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <button class="w-8 h-8 flex items-center justify-center bg-dark-100 rounded-full hover:bg-dark-100/80 transition-colors" title="Edit Entry">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mnemonic Generator Popup -->
+    <div class="fixed inset-0 bg-black/70 z-40 hidden" id="popupOverlay"></div>
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-dark-200 rounded-xl p-5 shadow-lg z-50 w-11/12 max-w-md hidden" id="mnemonicPopup">
+        <div class="text-xl font-bold text-primary mb-4">🧠 AI Mnemonic Generator</div>
+        <div id="generatedMnemonic" class="mb-4">
+            <div class="p-3 bg-green-900/5 rounded-md mb-2 border-green-700/20 border">
+                <div class="text-base font-medium text-white mb-1">Generating personalized mnemonic...</div>
+                <div class="text-sm text-gray-300">AI is analyzing your learning style and creating memorable associations...</div>
+            </div>
+        </div>
+        <div class="flex gap-3 justify-end">
+            <button class="px-4 py-2 bg-dark-100 text-white rounded-lg hover:bg-dark-100/80 transition-colors" onclick="closeMnemonicPopup()">Close</button>
+            <button class="px-4 py-2 bg-primary text-dark-300 font-medium rounded-lg hover:bg-primary/90 transition-colors" onclick="saveMnemonic()">Add to Journal</button>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script src="js/redirect.js"></script>
+    <script src="js/components.js"></script>
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Audio player functionality
+            let isPlaying = false;
+            const playBtn = document.querySelector('.play-button');
+            const progressBar = document.querySelector('.progress-fill');
+            const trackTitle = document.querySelector('.current-track');
+            const trackMeta = document.querySelector('.track-meta');
+            const speedControl = document.querySelector('.speed-control');
+            
+            // Toggle play/pause
+            playBtn.addEventListener('click', function() {
+                isPlaying = !isPlaying;
+                const icon = this.querySelector('svg');
+                
+                if (isPlaying) {
+                    // Change to pause icon
+                    icon.innerHTML = '<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />';
+                    startProgressAnimation();
+                } else {
+                    // Change to play icon
+                    icon.innerHTML = '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />';
+                    stopProgressAnimation();
+                }
+            });
+            
+            // Progress animation
+            let progressInterval;
+            let currentProgress = 35;
+
+            function startProgressAnimation() {
+                progressInterval = setInterval(() => {
+                    currentProgress += 0.5;
+                    if (currentProgress >= 100) {
+                        currentProgress = 0;
+                        // Auto-advance to next note
+                        advanceToNextNote();
+                    }
+                    progressBar.style.width = currentProgress + '%';
+                }, 100);
+            }
+
+            function stopProgressAnimation() {
+                clearInterval(progressInterval);
+            }
+
+            function advanceToNextNote() {
+                // Simulate advancing to next note
+                const notes = [
+                    { title: 'Calculus: Derivatives', meta: 'Due for review • 3:12 remaining' },
+                    { title: 'History: WW2 Timeline', meta: 'Spaced review • 4:45 remaining' },
+                    { title: 'Physics Ch. 3: Momentum', meta: 'Due for review • 2:34 remaining' },
+                    { title: 'Chemistry: Organic Compounds', meta: 'New review • 5:20 remaining' },
+                    { title: 'Literature: Shakespeare Analysis', meta: 'Due for review • 6:45 remaining' }
+                ];
+                
+                const currentIndex = notes.findIndex(note => note.title === trackTitle.textContent);
+                const nextIndex = (currentIndex + 1) % notes.length;
+                
+                trackTitle.textContent = notes[nextIndex].title;
+                trackMeta.textContent = notes[nextIndex].meta;
+                
+                currentProgress = 0;
+            }
+
+            // Speed control
+            const speeds = ['1x', '1.25x', '1.5x', '2x'];
+            let currentSpeedIndex = 0;
+
+            speedControl.addEventListener('click', function() {
+                currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+                this.textContent = speeds[currentSpeedIndex];
+            });
+
+            // Queue item interactions
+            document.querySelectorAll('.bg-dark-200.rounded-lg.p-3.mb-2').forEach(item => {
+                item.addEventListener('click', function() {
+                    const title = this.querySelector('.text-sm.font-medium.text-white').textContent;
+                    
+                    trackTitle.textContent = title;
+                    trackMeta.textContent = 'Now playing • Starting...';
+                    currentProgress = 0;
+                    progressBar.style.width = '0%';
+                    
+                    if (isPlaying) {
+                        stopProgressAnimation();
+                        startProgressAnimation();
+                    }
+                    
+                    // Visual feedback
+                    const originalBg = this.className;
+                    this.className = originalBg + ' bg-primary/10';
+                    setTimeout(() => {
+                        this.className = originalBg;
+                    }, 300);
+                });
+            });
+
+            // Journal functionality
+            document.getElementById('addEntryBtn').addEventListener('click', function() {
+                const form = document.getElementById('newEntryForm');
+                form.classList.remove('hidden');
+                this.classList.add('hidden');
+            });
+
+            document.getElementById('cancelEntry').addEventListener('click', function() {
+                const form = document.getElementById('newEntryForm');
+                const addBtn = document.getElementById('addEntryBtn');
+                form.classList.add('hidden');
+                addBtn.classList.remove('hidden');
+                // Clear form
+                form.querySelectorAll('input, textarea').forEach(input => input.value = '');
+            });
+            
+            document.getElementById('saveEntry').addEventListener('click', function() {
+                const form = document.getElementById('newEntryForm');
+                const addBtn = document.getElementById('addEntryBtn');
+                
+                // Here you would implement saving the journal entry
+                // For now, we'll just simulate it with a success message
+                alert('Entry saved! AI summary is being generated...');
+                
+                // Hide form and show add button again
+                form.classList.add('hidden');
+                addBtn.classList.remove('hidden');
+                
+                // Clear form
+                form.querySelectorAll('input, textarea').forEach(input => input.value = '');
+            });
+
+            // Add visual feedback for interactions
+            document.querySelectorAll('.bg-dark-200.rounded-lg.p-3.mb-2').forEach(item => {
+                // We're using Tailwind's hover classes instead of JavaScript for hover effects
+                // The transition is handled by Tailwind's transition-transform class
+                // But we'll keep the click feedback from earlier
+            });
+
+            // Mnemonic popup functionality
+            const generateMnemonicsBtn = document.getElementById('generateMnemonics');
+            const mnemonicPopup = document.getElementById('mnemonicPopup');
+            const popupOverlay = document.getElementById('popupOverlay');
+            
+            if (generateMnemonicsBtn) {
+                generateMnemonicsBtn.addEventListener('click', function() {
+                    mnemonicPopup.classList.remove('hidden');
+                    popupOverlay.classList.remove('hidden');
+                });
+            }
+            
+            // Close mnemonic popup
+            window.closeMnemonicPopup = function() {
+                mnemonicPopup.classList.add('hidden');
+                popupOverlay.classList.add('hidden');
+            };
+            
+            window.saveMnemonic = function() {
+                // Here you would implement saving the mnemonic to the journal
+                alert('Mnemonic saved to journal!');
+                closeMnemonicPopup();
+            };
+            
+            if (popupOverlay) {
+                popupOverlay.addEventListener('click', function() {
+                    closeMnemonicPopup();
+                });
+            }
+
+            // Add back button to return to study tools
+            const backButton = document.createElement('button');
+            backButton.textContent = '← Back to Study Tools';
+            backButton.className = 'fixed top-5 left-5 bg-primary text-dark-300 py-2 px-4 rounded-full font-bold cursor-pointer z-50 hover:bg-primary/90 transition-colors';
+            backButton.addEventListener('click', function() {
+                window.location.href = 'study-tools.html';
+            });
+            document.body.appendChild(backButton);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Tools</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ffff00',
+                        dark: {
+                            100: '#2a2a2a',
+                            200: '#1a1a1a',
+                            300: '#111111',
+                        },
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+    </style>
+</head>
+<body class="bg-dark-300 text-white">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-16 bg-dark-200 flex flex-col items-center py-4 fixed h-full">
+            <div class="w-10 h-10 bg-primary text-black rounded-full flex items-center justify-center font-bold mb-8">UG</div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-primary text-black rounded-full flex items-center justify-center mb-4 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="ml-16 flex-1 p-6 overflow-y-auto">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div class="relative w-1/2">
+                    <input type="text" placeholder="Search Study Tools" class="w-full bg-dark-100 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute right-3 top-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+
+            <h1 class="text-3xl font-bold text-primary mb-2">Study Tools</h1>
+            <p class="text-gray-400">Boost your productivity and learning with these specialized tools.</p>
+
+            <!-- Tools Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Flashcards Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Flashcards</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Create and study flashcards with spaced repetition.</p>
+                    <a href="flashcards.html" style="text-decoration: none;">
+                        <button class="tool-button bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Open Tool</button>
+                    </a>
+                </div>
+                
+                <!-- Pomodoro Timer Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Pomodoro Timer</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Stay focused with timed work sessions and breaks.</p>
+                    <button class="tool-button bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Open Tool</button>
+                </div>
+                
+                <!-- Smart Notes Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer" id="smartNotesCard">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Smart Notes</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Take organized notes with automatic formatting and search capabilities.</p>
+                    <button class="tool-button bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30" id="smartNotesBtn">Open Tool</button>
+                </div>
+                
+                <!-- Study Planner Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Study Planner</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Plan your study sessions and track your progress over time.</p>
+                    <button class="tool-button bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Open Tool</button>
+                </div>
+                
+                <!-- Study Groups Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20h-4v-2a3 3 0 00-5.356 1.857M17 20v-7a3 3 0 00-3-3h-4a3 3 0 00-3 3v7a3 3 0 003 3h4a3 3 0 003-3z" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Study Groups</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Find or create study groups with classmates for collaborative learning.</p>
+                    <button class="tool-button bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Open Tool</button>
+                </div>
+                
+                <!-- Practice Quizzes Tool Card -->
+                <div class="bg-dark-200 rounded-2xl p-6 transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20 cursor-pointer">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-dark-100 rounded-full flex items-center justify-center mr-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                            </svg>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary">Practice Quizzes</h2>
+                    </div>
+                    <p class="text-gray-400 mb-6">Test your knowledge with adaptive quizzes.</p>
+                    <button class="tool-button bg-gray-700 text-gray-300 font-bold py-2 px-6 rounded-full cursor-not-allowed">Coming Soon</button>
+                </div>
+            </div>
+
+            <div class="recent-activity">
+                <h2 class="text-2xl font-bold text-primary mb-2">Recent Activity</h2>
+                
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7M13.915 12l-1.502 1.502a1.125 1.125 0 01-1.503-1.503L10.354 9.454a.25.25 0 01.07-.185l1.788-1.788a.25.25 0 01.288.112l-1.409 1.409a1.125 1.125 0 01-1.503-1.503l-1.78 1.78a.25.25 0 01-.284.161l1.409 1.409a1.125 1.125 0 001.503-1.503l-1.78-1.78a.25.25 0 01-.07-.185z" />
+                            </svg>
+                        </div>
+                        <div class="activity-icon">📝</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Physics Notes Updated</div>
+                            <div class="activity-meta">
+                                <span>Smart Notes</span>
+                                <span>Today, 2:15 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">⏱️</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Completed 2 Pomodoro Sessions</div>
+                            <div class="activity-meta">
+                                <span>Pomodoro Timer</span>
+                                <span>Today, 11:30 AM</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon">🎯</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Achieved 85% on Practice Quiz</div>
+                            <div class="activity-meta">
+                                <span>Practice Quizzes</span>
+                                <span>Yesterday, 4:45 PM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-right">
+            <div class="section-title">STATISTICS</div>
+            
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Study Time This Week</div>
+                <div style="font-size: 32px; font-weight: bold; color: #ffff00; margin-bottom: 15px;">16h 45m</div>
+                <div style="height: 5px; background: #333; border-radius: 3px; position: relative; margin-bottom: 5px;">
+                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 75%; background: #ffff00; border-radius: 3px;"></div>
+                </div>
+                <div style="font-size: 12px; color: #666; text-align: right;">75% of goal</div>
+            </div>
+            
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 14px; color: #666; margin-bottom: 10px;">Top Subjects</div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: #fff;">Physics</span>
+                    <span style="color: #ffff00;">4h 30m</span>
+                </div>
+                <div style="height: 4px; background: #333; border-radius: 2px; position: relative; margin-bottom: 15px;">
+                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 90%; background: #ffff00; border-radius: 2px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: #fff;">Calculus</span>
+                    <span style="color: #ffff00;">3h 15m</span>
+                </div>
+                <div style="height: 4px; background: #333; border-radius: 2px; position: relative; margin-bottom: 15px;">
+                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 65%; background: #ffff00; border-radius: 2px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <span style="color: #fff;">Literature</span>
+                    <span style="color: #ffff00;">2h 45m</span>
+                </div>
+                <div style="height: 4px; background: #333; border-radius: 2px; position: relative; margin-bottom: 15px;">
+                    <div style="position: absolute; left: 0; top: 0; height: 100%; width: 55%; background: #ffff00; border-radius: 2px;"></div>
+                </div>
+            </div>
+            
+            <div class="section-title">UPCOMING</div>
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; margin-bottom: 10px;">
+                <div style="font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 5px;">Physics Exam</div>
+                <div style="font-size: 12px; color: #ffff00;">Tomorrow, 10:00 AM</div>
+            </div>
+            
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; margin-bottom: 10px;">
+                <div style="font-size: 16px; font-weight: bold; color: #fff; margin-bottom: 5px;">Study Group Meeting</div>
+                <div style="font-size: 12px; color: #ffff00;">Friday, 3:30 PM</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script src="js/redirect.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        // Journal functionality
+        document.getElementById('addEntryBtn').addEventListener('click', function() {
+            const form = document.getElementById('newEntryForm');
+            form.classList.add('open');
+            this.style.display = 'none';
+        });
+
+        document.getElementById('cancelEntry').addEventListener('click', function() {
+            const form = document.getElementById('newEntryForm');
+            const addBtn = document.getElementById('addEntryBtn');
+            form.classList.remove('open');
+            addBtn.style.display = 'block';
+            // Clear form
+            form.querySelectorAll('input, textarea').forEach(input => input.value = '');
+        });
+        
+        // Add navigation between pages
+        // Get all nav items
+        const navItems = document.querySelectorAll('.nav-item');
+        
+        // Add click event to the home icon (first nav item after logo)
+        if (navItems[0]) {
+            navItems[0].addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+        }
+        
+        // Add click event to the refresh icon (third nav item after logo)
+        if (navItems[2]) {
+            navItems[2].addEventListener('click', function() {
+                window.location.href = 'study-tools.html';
+            });
+        }
+        
+        // Add click events to tool buttons that don't have links yet
+        document.querySelectorAll('.tool-button').forEach(button => {
+            // Skip the flashcard button since it has its own link
+            if (button.id === 'smartNotesBtn') {
+                button.addEventListener('click', function() {
+                    console.log('Smart Notes button clicked');
+                    window.location.href = 'audio-notes.html';
+                });
+            } else if (!button.closest('a[href="flashcards.html"]')) {
+                button.addEventListener('click', function() {
+                    alert('This tool would open in a full interface. Feature coming soon!');
+                });
+            }
+        });
+        
+        // Also make the entire Smart Notes card clickable
+        const smartNotesCard = document.getElementById('smartNotesCard');
+        if (smartNotesCard) {
+            smartNotesCard.addEventListener('click', function(e) {
+                // Only trigger if the click wasn't on the button (which has its own handler)
+                if (!e.target.closest('#smartNotesBtn')) {
+                    console.log('Smart Notes card clicked');
+                    window.location.href = 'audio-notes.html';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

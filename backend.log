@@ -1,0 +1,21 @@
+2025-07-18 05:36:55,940 - moodle_client - INFO - Moodle API client initialized with base URL: https://moodle.concordia.ca
+2025-07-18 05:36:55,940 - moodle_client - INFO - Using real Moodle API data only
+2025-07-18 05:36:55,940 - moodle_api_server - INFO - Using real Moodle API with provided token
+2025-07-18 05:36:56,087 - moodle_client - ERROR - Request failed: 404 Client Error: Not Found for url: https://moodle.concordia.ca/webservice/rest/server.php?wstoken=a6f3e36db214f134c20acc2d8d6b8af6&moodlewsrestformat=json&wsfunction=core_webservice_get_site_info
+2025-07-18 05:36:56,087 - moodle_client - ERROR - Response content: <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>404 Not Found</title>
+</head><body>
+<h1>Not Found</h1>
+<p>The requested URL was not found on this server.</p>
+</body></html>
+
+2025-07-18 05:36:56,087 - moodle_client - ERROR - Token validation failed: Request failed: 404 Client Error: Not Found for url: https://moodle.concordia.ca/webservice/rest/server.php?wstoken=a6f3e36db214f134c20acc2d8d6b8af6&moodlewsrestformat=json&wsfunction=core_webservice_get_site_info
+2025-07-18 05:36:56,088 - moodle_api_server - WARNING - Moodle API token validation failed. Server will start but Moodle features may not work properly.
+2025-07-18 05:36:56,088 - gpt_service - INFO - GPT API service initialized
+2025-07-18 05:36:56,088 - gpt_service - INFO - Using mock data: False
+2025-07-18 05:36:56,088 - moodle_api_server - INFO - Using real GPT API with provided key
+ * Serving Flask app 'api_server'
+ * Debug mode: on
+Address already in use
+Port 5002 is in use by another program. Either identify and stop that program, or start the server with a different port.

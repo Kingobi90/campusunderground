@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flashcards - UG Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ffff00',
+                        dark: {
+                            100: '#2a2a2a',
+                            200: '#1a1a1a',
+                            300: '#111111',
+                        },
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Keep original styles for now, we'll replace them gradually -->
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        /* Custom styles for flashcard flip animation */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        
+        .transform-style-preserve-3d {
+            transform-style: preserve-3d;
+        }
+        
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+        
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        
+        #flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        
+        /* Additional custom styles for the flashcard app */
+        #flashcard .flashcard-inner {
+            transition: transform 0.8s;
+        }
+        
+        #flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+        
+        /* Add any additional styles here if needed */
+        
+        .nav-btn:hover {
+            background: #3a3a3a;
+            transform: scale(1.1);
+        }
+        
+        .card-counter {
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .card-counter span {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #2a2a2a;
+            border-radius: 3px;
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #ffff00;
+            width: 25%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .deck-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        
+        .stat-box {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffff00;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .icon-plus-small {
+            position: relative;
+            width: 16px;
+            height: 16px;
+        }
+        
+    </style>
+</head>
+<body class="bg-dark-300 text-white">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-16 bg-dark-200 flex flex-col items-center py-4 fixed h-full">
+            <div class="w-10 h-10 bg-primary text-black rounded-full flex items-center justify-center font-bold mb-8">UG</div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-primary text-black rounded-full flex items-center justify-center mb-4 cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ml-16 flex-1 p-6 overflow-y-auto">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div class="relative w-1/2">
+                    <input type="text" placeholder="Search flashcards" class="w-full bg-dark-100 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary">
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="w-8 h-8 bg-dark-100 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <div class="w-8 h-8 bg-primary text-black rounded-full flex items-center justify-center font-bold">OC</div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <a href="study-tools.html" class="inline-flex items-center text-gray-400 hover:text-primary mb-2 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Tools
+                </a>
+                <h1 class="text-3xl font-bold text-primary">Flashcards</h1>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-8">
+                    <div class="relative w-64">
+                        <select id="deck-select" class="w-full appearance-none bg-dark-100 border border-dark-100 text-white py-3 px-4 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary">
+                            <option value="">Select a course</option>
+                            <!-- Courses will be loaded dynamically -->
+                        </select>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-primary">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <button id="generate-btn" class="flex items-center gap-2 bg-dark-100 hover:bg-dark-200 text-white py-2 px-4 rounded-lg transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Generate from Notes
+                        </button>
+                        <button id="api-settings-btn" class="bg-primary hover:bg-primary/90 text-black font-bold py-2 px-4 rounded-lg transition-colors">
+                            API Settings
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="h-2 bg-dark-100 rounded-full mb-8 overflow-hidden">
+                    <div class="h-full bg-primary w-1/3"></div>
+                </div>
+                
+                <div id="flashcard" class="w-full h-96 perspective-1000 mb-8 cursor-pointer">
+                    <div class="relative w-full h-full transition-transform duration-700 transform-style-preserve-3d">
+                        <div class="absolute w-full h-full flex items-center justify-center p-8 rounded-2xl shadow-lg bg-gradient-to-br from-dark-100 to-dark-200 text-white text-2xl font-bold backface-hidden">
+                            What is the capital of France?
+                        </div>
+                        <div class="absolute w-full h-full flex items-center justify-center p-8 rounded-2xl shadow-lg bg-gradient-to-br from-primary to-primary/80 text-black text-xl backface-hidden transform rotate-y-180">
+                            Paris
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mb-8">
+                    <button class="w-12 h-12 rounded-full bg-dark-100 hover:bg-dark-200 flex items-center justify-center text-white text-2xl transition-all hover:scale-110">←</button>
+                    <div class="text-lg text-gray-400">Card <span class="text-white">1</span> of <span class="text-white">20</span></div>
+                    <button class="w-12 h-12 rounded-full bg-dark-100 hover:bg-dark-200 flex items-center justify-center text-white text-2xl transition-all hover:scale-110">→</button>
+                </div>
+                
+                <div class="flex justify-between bg-dark-200 rounded-2xl p-6 mb-8">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary mb-1">85%</div>
+                        <div class="text-sm text-gray-400">Accuracy</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white mb-1">12</div>
+                        <div class="text-sm text-gray-400">Cards Studied</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white mb-1">8</div>
+                        <div class="text-sm text-gray-400">Cards Remaining</div>
+                    </div>
+                </div>
+                
+                <div class="deck-stats">
+                    <div class="stat-box">
+                        <div class="stat-value stat-total">0</div>
+                        <div class="stat-label">Total Cards</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value stat-mastered">0</div>
+                        <div class="stat-label">Mastered</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value stat-learning">0</div>
+                        <div class="stat-label">Learning</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value stat-new">0</div>
+                        <div class="stat-label">New</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-right">
+            <div class="section-title">DECK INFO</div>
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-size: 18px; font-weight: bold; color: #fff; margin-bottom: 10px;" class="deck-info-title">Select a Course</div>
+                <div style="font-size: 14px; color: #666; margin-bottom: 15px;">Created on July 9, 2025</div>
+                <div style="font-size: 14px; color: #666; margin-bottom: 5px;">Last studied: Today</div>
+                <div style="font-size: 14px; color: #666;">Study streak: 3 days</div>
+            </div>
+            
+            <div class="section-title">RECENT CARDS</div>
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; margin-bottom: 10px; cursor: pointer;">
+                <div style="font-size: 16px; color: #fff; margin-bottom: 5px;">What is the formula for kinetic energy?</div>
+                <div style="font-size: 12px; color: #666;">Studied 2 hours ago</div>
+            </div>
+            
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; margin-bottom: 10px; cursor: pointer;">
+                <div style="font-size: 16px; color: #fff; margin-bottom: 5px;">Define momentum and its formula</div>
+                <div style="font-size: 12px; color: #666;">Studied yesterday</div>
+            </div>
+            
+            <div style="background: #1a1a1a; border-radius: 16px; padding: 15px; margin-bottom: 10px; cursor: pointer;">
+                <div style="font-size: 16px; color: #fff; margin-bottom: 5px;">What are the three types of thermal energy transfer?</div>
+                <div style="font-size: 12px; color: #666;">Studied 2 days ago</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/flashcard-api.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/redirect.js"></script>
+    <script src="js/components.js"></script>
+<script>
+        // Global variables
+        let currentFlashcards = [];
+        let currentCardIndex = 0;
+        let isGenerating = false;
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Initialize API
+            const initialized = await flashcardAPI.initialize();
+            
+            // Since we have default API keys, we can automatically use them
+            if (!initialized) {
+                // Pre-fill the API credentials in the modal
+                document.getElementById('chatgpt-key').value = flashcardAPI.apiKey;
+                document.getElementById('moodle-token').value = flashcardAPI.moodleToken;
+                document.getElementById('moodle-url').value = flashcardAPI.moodleUrl;
+                
+                // Automatically use the default credentials
+                flashcardAPI.setCredentials(flashcardAPI.apiKey, flashcardAPI.moodleToken, flashcardAPI.moodleUrl);
+                await loadCourses();
+                
+                // We'll still show the modal if the user wants to change credentials
+                // But add a message indicating we're using default credentials
+                document.querySelector('#api-setup-modal p').innerHTML = 'Using default API credentials. <br>You can modify them below if needed:';
+            } else {
+                // Load courses into the dropdown
+                await loadCourses();
+            }
+            
+            // Flashcard flip functionality
+            const flashcard = document.getElementById('flashcard');
+            flashcard.addEventListener('click', function() {
+                if (!isGenerating) {
+                    this.classList.toggle('flipped');
+                }
+            });
+            
+            // Navigation between pages
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            // Add click event to the home icon (first nav item after logo)
+            navItems[0].addEventListener('click', function() {
+                window.location.href = 'index.html';
+            });
+            
+            // Add click event to the refresh icon (third nav item after logo)
+            navItems[2].addEventListener('click', function() {
+                window.location.href = 'study-tools.html';
+            });
+            
+            // Deck selector change event
+            document.getElementById('deck-select').addEventListener('change', async function() {
+                const courseId = parseInt(this.value);
+                if (courseId) {
+                    await loadCourseContent(courseId);
+                }
+            });
+            
+            // Content selector change event
+            document.getElementById('content-select').addEventListener('change', async function() {
+                const contentId = parseInt(this.value);
+                if (contentId && !isGenerating) {
+                    await generateFlashcards(contentId);
+                }
+            });
+            
+            // Navigation buttons
+            const prevBtn = document.querySelectorAll('.nav-btn')[0];
+            const nextBtn = document.querySelectorAll('.nav-btn')[1];
+            
+            prevBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent flashcard from flipping
+                if (currentCardIndex > 0 && !isGenerating) {
+                    currentCardIndex--;
+                    updateCard();
+                }
+            });
+            
+            nextBtn.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent flashcard from flipping
+                if (currentCardIndex < currentFlashcards.length - 1 && !isGenerating) {
+                    currentCardIndex++;
+                    updateCard();
+                }
+            });
+            
+            // API setup form submission
+            document.getElementById('api-setup-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const chatgptKey = document.getElementById('chatgpt-key').value;
+                const moodleToken = document.getElementById('moodle-token').value;
+                const moodleUrl = document.getElementById('moodle-url').value;
+                
+                if (chatgptKey && moodleToken && moodleUrl) {
+                    flashcardAPI.setCredentials(chatgptKey, moodleToken, moodleUrl);
+                    hideApiSetupModal();
+                    loadCourses();
+                }
+            });
+            
+            // Close modal button
+            document.querySelector('.close-modal').addEventListener('click', function() {
+                hideApiSetupModal();
+            });
+            
+            // Quick Start button
+            document.getElementById('quick-start-btn').addEventListener('click', function() {
+                // Use the pre-filled values
+                const chatgptKey = document.getElementById('chatgpt-key').value;
+                const moodleToken = document.getElementById('moodle-token').value;
+                const moodleUrl = document.getElementById('moodle-url').value;
+                
+                if (chatgptKey) {
+                    flashcardAPI.setCredentials(chatgptKey, moodleToken || 'demo_token', moodleUrl || 'https://demo.moodle.org');
+                    hideApiSetupModal();
+                    loadCourses();
+                }
+            });
+            
+            // Generate new cards button
+            document.getElementById('generate-btn').addEventListener('click', async function() {
+                const contentSelect = document.getElementById('content-select');
+                const contentId = parseInt(contentSelect.value);
+                if (contentId && !isGenerating) {
+                    await generateFlashcards(contentId);
+                }
+            });
+            
+            // API Settings button
+            document.getElementById('api-settings-btn').addEventListener('click', function() {
+                showApiSetupModal();
+            });
+        });
+        
+        // Load courses into the dropdown
+        async function loadCourses() {
+            try {
+                const courses = await flashcardAPI.fetchCourses();
+                const deckSelect = document.getElementById('deck-select');
+                
+                // Clear existing options
+                deckSelect.innerHTML = '<option value="">Select a course</option>';
+                
+                // Add courses to dropdown
+                courses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.id;
+                    option.textContent = course.fullname;
+                    deckSelect.appendChild(option);
+                });
+                
+                // If we have courses, load the first one
+                if (courses.length > 0) {
+                    deckSelect.value = courses[0].id;
+                    await loadCourseContent(courses[0].id);
+                }
+            } catch (error) {
+                console.error('Failed to load courses:', error);
+                showError('Failed to load courses. Please check your Moodle API credentials.');
+            }
+        }
+        
+        // Load course content into the dropdown
+        async function loadCourseContent(courseId) {
+            try {
+                const courseContent = await flashcardAPI.fetchCourseContent(courseId);
+                const contentSelect = document.getElementById('content-select');
+                
+                // Clear existing options
+                contentSelect.innerHTML = '<option value="">Select course content</option>';
+                
+                // Add content to dropdown
+                courseContent.forEach(content => {
+                    const option = document.createElement('option');
+                    option.value = content.id;
+                    option.textContent = content.name;
+                    contentSelect.appendChild(option);
+                });
+                
+                // Update deck info
+                const course = flashcardAPI.courses.find(c => c.id === courseId);
+                if (course) {
+                    document.querySelector('.deck-info-title').textContent = course.fullname;
+                }
+                
+                // If we have content, select the first one and generate flashcards
+                if (courseContent.length > 0) {
+                    contentSelect.value = courseContent[0].id;
+                    await generateFlashcards(courseContent[0].id);
+                }
+            } catch (error) {
+                console.error('Failed to load course content:', error);
+                showError('Failed to load course content. Please try again.');
+            }
+        }
+        
+        // Generate flashcards using ChatGPT API
+        async function generateFlashcards(contentId) {
+            try {
+                isGenerating = true;
+                showLoading();
+                
+                // Find the selected course content
+                const courseId = parseInt(document.getElementById('deck-select').value);
+                const courseContent = await flashcardAPI.fetchCourseContent(courseId);
+                const selectedContent = courseContent.find(content => content.id === contentId);
+                
+                if (!selectedContent) {
+                    throw new Error('Selected content not found');
+                }
+                
+                // Generate flashcards
+                currentFlashcards = await flashcardAPI.generateFlashcards(selectedContent);
+                currentCardIndex = 0;
+                
+                // Update UI
+                updateCard();
+                updateStats();
+                hideLoading();
+                isGenerating = false;
+                
+                // Show success message
+                showSuccess(`Successfully generated ${currentFlashcards.length} flashcards for ${selectedContent.name}`);
+            } catch (error) {
+                console.error('Failed to generate flashcards:', error);
+                showError('Failed to generate flashcards. Please check your API credentials.');
+                hideLoading();
+                isGenerating = false;
+            }
+        }
+        
+        // Update the current card display
+        function updateCard() {
+            if (currentFlashcards.length === 0) {
+                return;
+            }
+            
+            const card = currentFlashcards[currentCardIndex];
+            document.querySelector('.flashcard-front').textContent = card.front;
+            document.querySelector('.flashcard-back').textContent = card.back;
+            
+            // Reset flip state
+            document.getElementById('flashcard').classList.remove('flipped');
+            
+            // Update counter and progress
+            updateCardCounter();
+            updateProgressBar();
+        }
+        
+        // Update the card counter
+        function updateCardCounter() {
+            document.querySelector('.card-counter span:first-child').textContent = currentCardIndex + 1;
+            document.querySelector('.card-counter span:last-child').textContent = currentFlashcards.length;
+        }
+        
+        // Update the progress bar
+        function updateProgressBar() {
+            const progress = currentFlashcards.length > 0 ? ((currentCardIndex + 1) / currentFlashcards.length) * 100 : 0;
+            document.querySelector('.progress-fill').style.width = progress + '%';
+        }
+        
+        // Update statistics
+        function updateStats() {
+            document.querySelector('.stat-total').textContent = currentFlashcards.length;
+            
+            // In a real app, these would be based on actual user progress data
+            const mastered = Math.floor(currentFlashcards.length * 0.25);
+            const learning = Math.floor(currentFlashcards.length * 0.5);
+            const newCards = currentFlashcards.length - mastered - learning;
+            
+            document.querySelector('.stat-mastered').textContent = mastered;
+            document.querySelector('.stat-learning').textContent = learning;
+            document.querySelector('.stat-new').textContent = newCards;
+        }
+        
+        // Show API setup modal
+        function showApiSetupModal() {
+            const modal = document.getElementById('api-setup-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+        
+        // Hide API setup modal
+        function hideApiSetupModal() {
+            const modal = document.getElementById('api-setup-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+        
+        // Show loading state
+        function showLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+        
+        // Hide loading state
+        function hideLoading() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            errorElement.style.background = '#ff3333';
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Show success message
+        function showSuccess(message) {
+            const successElement = document.getElementById('error-message');
+            successElement.textContent = message;
+            successElement.style.display = 'block';
+            successElement.style.background = '#33cc33';
+            
+            setTimeout(() => {
+                successElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+    <!-- API Setup Modal -->
+    <div id="api-setup-modal" class="fixed inset-0 bg-black/80 z-50 items-center justify-center hidden"><!-- Will toggle between hidden and flex via JS -->
+        <div class="bg-dark-200 rounded-2xl p-8 w-full max-w-lg relative">
+            <button class="close-modal absolute top-4 right-4 text-gray-500 hover:text-white text-2xl bg-transparent border-0 cursor-pointer">×</button>
+            <h2 class="text-primary text-2xl font-bold mb-4">API Setup Required</h2>
+            <p class="text-white mb-6">To generate flashcards, you need to provide API credentials for ChatGPT and Moodle.</p>
+            
+            <form id="api-setup-form">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">ChatGPT API Key</label>
+                    <input id="chatgpt-key" type="password" class="w-full p-3 bg-dark-100 border border-dark-100 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary" value="" placeholder="sk-...">
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Moodle API Token</label>
+                    <input id="moodle-token" type="password" class="w-full p-3 bg-dark-100 border border-dark-100 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary" value="a6f3e36db214f134c20acc2d8d6b8af6" placeholder="Your Moodle token">
+                </div>
+                
+                <div class="mb-6">
+                    <label class="block text-gray-400 mb-2">Moodle URL</label>
+                    <input id="moodle-url" type="text" class="w-full p-3 bg-dark-100 border border-dark-100 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary" value="https://moodle.university.edu" placeholder="https://your-moodle-instance.edu">
+                </div>
+                
+                <button type="submit" class="w-full py-3 bg-primary hover:bg-primary/90 text-black font-bold rounded-lg cursor-pointer transition-colors">Save Credentials</button>
+                
+                <button id="quick-start-btn" type="button" class="w-full py-3 bg-dark-100 hover:bg-dark-200 text-white border border-gray-600 rounded-lg font-bold cursor-pointer mt-3 transition-colors">Quick Start with Demo Data</button>
+                
+                <p class="text-gray-500 text-xs mt-4 text-center">Your credentials are stored locally in your browser and are not sent to our servers.</p>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-black/70 z-50 items-center justify-center flex-col hidden"><!-- Will toggle between hidden and flex via JS -->
+        <div class="w-12 h-12 border-3 border-primary rounded-full border-t-transparent animate-spin"></div>
+        <p class="text-white mt-4">Generating flashcards with AI...</p>
+    </div>
+    
+    <!-- Error Message -->
+    <div id="error-message" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-red-600 text-white py-4 px-6 rounded-lg font-bold z-50"></div>
+</body>
+</html>

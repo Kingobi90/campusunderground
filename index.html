@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campus UnderGround - Dashboard</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ffff00',
+                        dark: {
+                            100: '#2a2a2a',
+                            200: '#1a1a1a',
+                            300: '#111111',
+                        },
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Tailwind handles all styling -->
+</head>
+<body class="bg-dark-300 text-white">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-16 bg-dark-200 flex flex-col items-center py-4 fixed h-full">
+            <div class="w-10 h-10 bg-primary text-black rounded-full flex items-center justify-center font-bold mb-8">UG</div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all active">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center mb-4 cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+            </div>
+            <div class="w-10 h-10 bg-dark-100 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary hover:text-black transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="ml-16 flex-1 p-6">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div class="relative w-1/2">
+                    <input type="text" placeholder="Search Campus UnderGround" class="w-full bg-dark-100 rounded-full py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 absolute right-3 top-2.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-black">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-dark-200 to-dark-100 rounded-2xl p-8 mb-8 border-l-4 border-primary">
+                    <h1 class="text-2xl font-bold text-primary mb-2">Welcome to Campus UnderGround</h1>
+                    <p class="text-gray-400">Your all-in-one platform for academic success. Access study tools, connect with peers, and organize your campus life.</p>
+                </div>
+                
+                <!-- Module Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Study Tools Card -->
+                    <div id="studyToolsCard" class="bg-dark-200 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20">
+                        <div class="w-16 h-16 bg-dark-100 rounded-full flex items-center justify-center mb-4">
+                            <span class="text-3xl">📚</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary mb-2">Study Tools</h2>
+                        <p class="text-gray-400 mb-6">Access flashcards, pomodoro timer, smart notes, and other productivity tools.</p>
+                        <button id="studyToolsBtn" class="bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Open Module</button>
+                    </div>
+                    
+                    <!-- Social Hub Card -->
+                    <div class="bg-dark-200 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20">
+                        <div class="w-16 h-16 bg-dark-100 rounded-full flex items-center justify-center mb-4">
+                            <span class="text-3xl">👥</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary mb-2">Social Hub</h2>
+                        <p class="text-gray-400 mb-6">Connect with classmates, join study groups, and collaborate on projects.</p>
+                        <button class="bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Coming Soon</button>
+                    </div>
+                    
+                    <!-- Campus Resources Card -->
+                    <div class="bg-dark-200 rounded-2xl p-6 flex flex-col items-center text-center cursor-pointer transform transition-all duration-300 hover:-translate-y-2 hover:shadow-lg hover:shadow-primary/20">
+                        <div class="w-16 h-16 bg-dark-100 rounded-full flex items-center justify-center mb-4">
+                            <span class="text-3xl">📋</span>
+                        </div>
+                        <h2 class="text-xl font-bold text-primary mb-2">Campus Resources</h2>
+                        <p class="text-gray-400 mb-6">Find campus services, academic resources, and event information.</p>
+                        <button class="bg-primary text-black font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:scale-105 hover:shadow-md hover:shadow-primary/30">Coming Soon</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Study Tools module navigation
+            const studyToolsCard = document.getElementById('studyToolsCard');
+            const studyToolsBtn = document.getElementById('studyToolsBtn');
+            
+            if (studyToolsCard) {
+                studyToolsCard.addEventListener('click', function(e) {
+                    if (!e.target.closest('#studyToolsBtn')) {
+                        window.location.href = 'Study Tools/study-tools.html';
+                    }
+                });
+            }
+            
+            if (studyToolsBtn) {
+                studyToolsBtn.addEventListener('click', function() {
+                    window.location.href = 'Study Tools/study-tools.html';
+                });
+            }
+            
+            // Add hover effects to cards
+            const cards = document.querySelectorAll('.module-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                    this.style.boxShadow = '0 10px 30px rgba(255, 255, 0, 0.15)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

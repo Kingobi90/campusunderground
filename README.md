@@ -1,6 +1,6 @@
 # Campus UnderGround - Modern Tech Stack
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 ### Frontend
 - **React.js** with TypeScript
